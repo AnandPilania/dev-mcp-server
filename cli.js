@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-require('dotenv').config();
+
+const path = require('path');
+require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 
 const { Command } = require('commander');
 const chalk = require('chalk');

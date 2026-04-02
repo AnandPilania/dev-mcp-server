@@ -1,6 +1,6 @@
 {
     "name": "dev-mcp-server",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Model Context Platform — AI that understands YOUR codebase",
     "main": "src/api/server.js",
     "type": "commonjs",
@@ -8,6 +8,10 @@
         "name": "Anand Pilania",
         "email": "pilaniaanand@gmail.com",
         "url": "https://github.com/AnandPilania"
+    },
+    "bin": {
+        "dev-mcp": "./cli.js",
+        "dev-mcp-server": "./cli.js"
     },
     "scripts": {
         "start": "node src/api/server.js",
@@ -27,10 +31,30 @@
         "glob": "^10.4.1",
         "morgan": "^1.10.0",
         "natural": "^8.0.1",
+        "openai": "^4.52.0",
         "ora": "^5.4.1",
         "winston": "^3.13.0"
     },
     "devDependencies": {
         "nodemon": "^3.1.2"
-    }
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "files": [
+        "cli.js",
+        "src/",
+        ".env.example",
+        "README.md"
+    ],
+    "keywords": [
+        "mcp",
+        "codebase",
+        "ai",
+        "developer-tools",
+        "anthropic",
+        "ollama",
+        "azure-openai"
+    ],
+    "license": "MIT"
 }
