@@ -34,11 +34,11 @@ Before answering any question, the AI looks up your **actual system**. It knows:
 
 Straight from the article — the three questions developers ask every single day:
 
-| Query | Endpoint | Example |
-|-------|----------|---------|
-| 🐛 **Why is this failing?** | `POST /api/query/debug` | `"Why is ClassCastException thrown in UserService?"` |
-| 🔍 **Where is this used?** | `POST /api/query/usage` | `"Where is getUserById called?"` |
-| 💥 **If I change this, what breaks?** | `POST /api/query/impact` | `"If I change the User model, what breaks?"` |
+| Query                                | Endpoint                 | Example                                              |
+| ------------------------------------ | ------------------------ | ---------------------------------------------------- |
+| 🐛 **Why is this failing?**           | `POST /api/query/debug`  | `"Why is ClassCastException thrown in UserService?"` |
+| 🔍 **Where is this used?**            | `POST /api/query/usage`  | `"Where is getUserById called?"`                     |
+| 💥 **If I change this, what breaks?** | `POST /api/query/impact` | `"If I change the User model, what breaks?"`         |
 
 ---
 
@@ -82,7 +82,8 @@ git clone <repo>
 cd dev-mcp-server
 npm install
 cp .env.example .env
-# Add your ANTHROPIC_API_KEY to .env
+# Add your ANTHROPIC_API_KEY to .env OR use `ollama` as LLM_PROVIDER
+# Add LLM_MODEL
 ```
 
 ### 2. Ingest your codebase
@@ -197,14 +198,14 @@ curl -X DELETE http://localhost:3000/api/ingest/clear
 
 ## Supported File Types
 
-| Type | Extensions |
-|------|-----------|
-| Code | `.js` `.ts` `.jsx` `.tsx` `.py` `.java` `.go` `.rb` `.php` `.cs` `.rs` |
-| Config | `.json` `.yaml` `.yml` `.env` `.toml` `.xml` |
-| Docs | `.md` `.txt` |
-| Logs | `.log` |
-| Schema | `.sql` `.graphql` `.gql` |
-| Scripts | `.sh` `.bash` |
+| Type    | Extensions                                                             |
+| ------- | ---------------------------------------------------------------------- |
+| Code    | `.js` `.ts` `.jsx` `.tsx` `.py` `.java` `.go` `.rb` `.php` `.cs` `.rs` |
+| Config  | `.json` `.yaml` `.yml` `.env` `.toml` `.xml`                           |
+| Docs    | `.md` `.txt`                                                           |
+| Logs    | `.log`                                                                 |
+| Schema  | `.sql` `.graphql` `.gql`                                               |
+| Scripts | `.sh` `.bash`                                                          |
 
 ---
 
