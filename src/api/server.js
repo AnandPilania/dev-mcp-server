@@ -37,7 +37,7 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
     res.json({
         name: 'Dev MCP Server — Model Context Platform',
-        version: '1.0.0',
+        version: '0.0.3',
         description: 'AI that understands YOUR codebase',
         endpoints: {
             health: 'GET /health',
