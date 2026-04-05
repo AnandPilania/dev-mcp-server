@@ -1,4 +1,4 @@
-# 🧠 Dev MCP Server — Model Context Platform v1.0
+8# 🧠 Dev MCP Server — Model Context Platform v1.0
 
 > **45 tools · 10 specialist agents · 10 pre-built teams · Dreamer · Compactor · Prompt Engineering · Plugins · Cron · Worktrees**
 >
@@ -712,17 +712,15 @@ POST /api/watcher/unwatch             # { path }
 6. **Dreaming consolidates knowledge** — 5-phase improvement without prompting
 7. **Memory is the nervous system** — every interaction makes the system smarter
 8. **Feedback closes the loop** — the improver learns what works and what doesn't
-9. **Tools are first-class** — 45 typed tools with real Anthropic `tool_use` integration
+9. **Tools are first-class** — 45 typed tools with real `tool_use` integration
 10. **Prompts are engineered** — analyse, improve, template, and A/B test every prompt
 
 ---
 
-## Environment Variables
+## More Environment Variables
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-...        # Required
 PORT=3000                            # Server port (default 3000)
-API_KEY=your-secret-key             # Optional: protect API with auth
 ENABLE_DREAMER=true                  # Auto-start dreamer (default true)
 DREAM_INTERVAL_MINUTES=30           # Dream frequency (default 30)
 ENABLE_MONITOR=true                  # Auto-start monitor (default true)
