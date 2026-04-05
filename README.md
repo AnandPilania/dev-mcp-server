@@ -80,16 +80,34 @@ Dev MCP Server fixes this by giving your AI permanent, growing knowledge of your
 │  └──────────────┘ └──────────────┘ └────────────┘ └───────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
-
 ---
 
 ## Quick Start
 
+### Option A — via npx (no install required)
+
+Run the server or query your codebase immediately without cloning the repo.
+
+```bash
+# In your project root (where your .env lives):
+npx dev-mcp-server ingest ./src
+npx dev-mcp-server query "Why is getUserById throwing?"
+npx dev-mcp-server query -i   # Start the interactive REPL
+npx dev-mcp-server start # WebUI dashboard
+```
+**Note:** npx will look for .env in the directory you run the command from,
+so make sure your credentials are there before running.
+
+---
+
+### Option B - Local Install (Full Platform)
+
+Recommended for using the Dashboard, Specialist Agents, and Dreamer background tasks.
 ```bash
 git clone <repo>
 cd dev-mcp-server
 npm install
-cp .env.example .env        # Add your ANTHROPIC_API_KEY
+cp .env.example .env        # Add your LLM provider details
 
 # Ingest your codebase
 node cli.js ingest ./src

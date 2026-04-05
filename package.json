@@ -1,6 +1,6 @@
 {
     "name": "dev-mcp-server",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Model Context Platform — AI that understands YOUR codebase",
     "main": "src/api/server.js",
     "type": "commonjs",
