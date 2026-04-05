@@ -55,7 +55,7 @@ Dev MCP Server fixes this by giving your AI permanent, growing knowledge of your
 │  │                       AGENT LAYER                                    │    │
 │  │                                                                       │    │
 │  │  ┌─────────────────────────────────────────────────────────────┐    │    │
-│  │  │  10 Specialist Agents (real Anthropic tool-use loop)         │    │    │
+│  │  │  10 Specialist Agents (real tool-use loop)         │    │    │
 │  │  │  Debug · Arch · Security · Docs · Refactor · Perf            │    │    │
 │  │  │  Test · DevOps · Data · Planner                              │    │    │
 │  │  └─────────────────────────────────────────────────────────────┘    │    │
@@ -124,7 +124,7 @@ open http://localhost:3000/dashboard
 
 ## The 45-Tool Registry
 
-Every tool has an Anthropic-compatible `tool_use` schema. Agents invoke them natively in the real API loop.
+Every tool has an compatible `tool_use` schema. Agents invoke them natively in the real API loop.
 
 | Group              | Tools                                                                                                   |
 | ------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -161,7 +161,7 @@ curl http://localhost:3000/api/registry
 
 ## 10 Specialist Agents
 
-Each agent runs the **real Anthropic tool-use loop** — it can call any of its assigned tools multiple times, chain tool calls, and reason between steps.
+Each agent runs the **real tool-use loop** — it can call any of its assigned tools multiple times, chain tool calls, and reason between steps.
 
 | Agent                | Tools Available                                                                      | Specialty                        |
 | -------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
