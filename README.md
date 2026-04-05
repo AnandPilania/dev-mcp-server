@@ -1,12 +1,8 @@
-8# 🧠 Dev MCP Server — Model Context Platform v1.0
+# 🧠 Dev MCP Server — Model Context Platform v1.0
 
 > **45 tools · 10 specialist agents · 10 pre-built teams · Dreamer · Compactor · Prompt Engineering · Plugins · Cron · Worktrees**
 >
 > An AI system that understands your codebase, learns from every interaction, dreams while you sleep, and coordinates teams of specialist agents — all grounded in your *actual* code, not generic knowledge.
-
-**Inspired by:**
-- *"How I Built an MCP Server That Made Developers Faster"* — the original RAG-over-codebase concept
-- **Claude Code** — 40+ tools, agent teams, coordinator, dreamer, context engineering, pipelines, plugins, worktrees, cron, prompt engineering
 
 ---
 
@@ -124,7 +120,7 @@ open http://localhost:3000/dashboard
 
 ## The 45-Tool Registry
 
-Every tool has an compatible `tool_use` schema. Agents invoke them natively in the real API loop.
+Every tool has a compatible `tool_use` schema. Agents invoke them natively in the real API loop.
 
 | Group              | Tools                                                                                                   |
 | ------------------ | ------------------------------------------------------------------------------------------------------- |
