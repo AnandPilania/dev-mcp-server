@@ -3,6 +3,11 @@ const router = express.Router();
 const { QueryEngine, QUERY_MODES } = require('../../core/queryEngine');
 const logger = require('../../utils/logger');
 
+/**
+ * POST /api/query
+ * General question — auto-detects mode
+ * Body: { question, topK?, filter? }
+ */
 router.post('/', async (req, res) => {
     const { question, topK, filter, mode } = req.body;
 
@@ -19,6 +24,11 @@ router.post('/', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/query/debug
+ * "Why is this failing?"
+ * Body: { error, stackTrace?, topK? }
+ */
 router.post('/debug', async (req, res) => {
     const { error, stackTrace, question, topK } = req.body;
 
@@ -40,6 +50,11 @@ router.post('/debug', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/query/usage
+ * "Where is this used?"
+ * Body: { symbol, topK? }
+ */
 router.post('/usage', async (req, res) => {
     const { symbol, topK } = req.body;
 
@@ -56,6 +71,11 @@ router.post('/usage', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/query/impact
+ * "If I change this, what breaks?"
+ * Body: { target, changeDescription?, topK? }
+ */
 router.post('/impact', async (req, res) => {
     const { target, changeDescription, topK } = req.body;
 
@@ -72,6 +92,10 @@ router.post('/impact', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/query/stream
+ * Streaming version of general query (Server-Sent Events)
+ */
 router.post('/stream', async (req, res) => {
     const { question, topK, mode } = req.body;
 

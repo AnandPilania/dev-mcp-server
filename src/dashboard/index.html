@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev MCP Server — Dashboard</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #58a6ff;
+            --green: #3fb950;
+            --yellow: #d29922;
+            --red: #f85149;
+            --purple: #bc8cff;
+            --cyan: #39d353;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, 'Segoe UI', monospace;
+            font-size: 14px;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        header .version {
+            background: #1f2937;
+            color: var(--muted);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            margin-left: auto;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: calc(100vh - 50px);
+        }
+
+        nav {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+        }
+
+        nav button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 9px 20px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        nav button:hover {
+            background: #1f2937;
+            color: var(--text);
+        }
+
+        nav button.active {
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--accent);
+            border-left: 2px solid var(--accent);
+        }
+
+        nav .section-label {
+            padding: 16px 20px 6px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+
+        main {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .card .label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .card .sub {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge.green {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--green);
+        }
+
+        .badge.yellow {
+            background: rgba(210, 153, 34, 0.15);
+            color: var(--yellow);
+        }
+
+        .badge.red {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--red);
+        }
+
+        .badge.blue {
+            background: rgba(88, 166, 255, 0.15);
+            color: var(--accent);
+        }
+
+        .badge.purple {
+            background: rgba(188, 140, 255, 0.15);
+            color: var(--purple);
+        }
+
+        input,
+        textarea,
+        select {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 9px 12px;
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #79c0ff;
+        }
+
+        .btn-outline {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-red {
+            background: rgba(248, 81, 73, 0.15);
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+
+        .flex {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+
+        pre {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .answer-box {
+            background: rgba(88, 166, 255, 0.05);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            font-size: 13px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .tag {
+            background: #1f2937;
+            color: var(--muted);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .alert-item {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .alert-item.critical {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 3px solid var(--red);
+        }
+
+        .alert-item.warn {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 3px solid var(--yellow);
+        }
+
+        .alert-item.info {
+            background: rgba(88, 166, 255, 0.07);
+            border-left: 3px solid var(--accent);
+        }
+
+        .check-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .conv-msg {
+            margin-bottom: 14px;
+        }
+
+        .conv-msg .role {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .conv-msg.user .bubble {
+            background: rgba(88, 166, 255, 0.08);
+            border-radius: 6px;
+            padding: 10px 14px;
+        }
+
+        .conv-msg.assistant .bubble {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 14px;
+            white-space: pre-wrap;
+            line-height: 1.65;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>🧠</div>
+        <h1>Dev MCP Server</h1>
+        <span class="version">v1.0</span>
+        <div id="serverStatus" class="status-dot" style="background:var(--yellow);box-shadow:0 0 6px var(--yellow)">
+        </div>
+        <span id="statusText" style="font-size:12px;color:var(--muted)">Connecting...</span>
+    </header>
+
+    <div class="layout">
+        <nav>
+            <div class="section-label">Overview</div>
+            <button class="active" onclick="show('dashboard')">📊 Dashboard</button>
+            <div class="section-label">Query</div>
+            <button onclick="show('chat')">💬 Conversation</button>
+            <button onclick="show('query')">⚡ Quick Query</button>
+            <div class="section-label">Agents</div>
+            <button onclick="show('agents')">🤖 Specialists</button>
+            <button onclick="show('teams')">👥 Teams</button>
+            <button onclick="show('pipelines')">🔧 Pipelines</button>
+            <div class="section-label">Tools</div>
+            <button onclick="show('skills')">🎯 Skills</button>
+            <button onclick="show('lsp')">🔍 Symbols</button>
+            <button onclick="show('edit')">✏️ File Edit</button>
+            <div class="section-label">Intelligence</div>
+            <button onclick="show('memory')">🧠 Memory</button>
+            <button onclick="show('dreamer')">💤 Dreamer</button>
+            <button onclick="show('monitor')">👁️ Monitor</button>
+            <div class="section-label">Manage</div>
+            <button onclick="show('tasks')">📋 Tasks</button>
+            <button onclick="show('knowledge')">📚 Knowledge</button>
+            <button onclick="show('cost')">💰 Cost</button>
+        </nav>
+
+        <main>
+
+            <!-- DASHBOARD -->
+            <div id="panel-dashboard" class="panel active">
+                <h2>System Overview</h2>
+                <div id="statsGrid" class="grid">
+                    <div class="card">
+                        <div class="label">Documents</div>
+                        <div class="value" id="stat-docs">—</div>
+                        <div class="sub" id="stat-files">— files</div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Memories</div>
+                        <div class="value" id="stat-mems">—</div>
+                        <div class="sub">auto-extracted facts</div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Tasks</div>
+                        <div class="value" id="stat-tasks">—</div>
+                        <div class="sub" id="stat-open">— open</div>
+                    </div>
+                    <div class="card">
+                        <div class="label">Total Cost</div>
+                        <div class="value" id="stat-cost">—</div>
+                        <div class="sub" id="stat-calls">— API calls</div>
+                    </div>
+                </div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:14px">🔍 Quick Search</div>
+                    <div class="flex">
+                        <input id="quickSearch" class="flex-1" placeholder="Search your codebase..."
+                            onkeydown="if(event.key==='Enter')rawSearch()">
+                        <button class="btn btn-primary" onclick="rawSearch()">Search</button>
+                    </div>
+                    <div id="searchResults" style="margin-top:14px"></div>
+                </div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:14px">📁 Ingest Files</div>
+                    <div class="flex">
+                        <input id="ingestPath" class="flex-1" placeholder="/path/to/your/project or file">
+                        <button class="btn btn-primary" onclick="ingest()">Ingest</button>
+                    </div>
+                    <div id="ingestResult" style="margin-top:12px;color:var(--muted);font-size:12px"></div>
+                </div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">📁 Indexed File Types</div>
+                    <div id="fileTypes"></div>
+                </div>
+            </div>
+
+            <!-- CONVERSATION -->
+            <div id="panel-chat" class="panel">
+                <h2>Multi-turn Conversation</h2>
+                <div class="box" style="min-height:300px;max-height:500px;overflow-y:auto" id="chatHistory"></div>
+                <div class="flex" style="margin-top:12px">
+                    <input id="chatInput" class="flex-1" placeholder="Ask anything about your codebase..."
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendChat()">
+                    <button class="btn btn-primary" onclick="sendChat()">Send</button>
+                    <button class="btn btn-outline" onclick="resetChat()" title="Reset conversation">↺</button>
+                </div>
+                <div id="chatMeta" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+            </div>
+
+            <!-- QUERY -->
+            <div id="panel-query" class="panel">
+                <h2>Quick Query</h2>
+                <div class="box">
+                    <div class="flex" style="margin-bottom:12px">
+                        <select id="queryMode" style="width:auto">
+                            <option value="">Auto-detect mode</option>
+                            <option value="debug">🐛 Debug</option>
+                            <option value="usage">🔍 Usage</option>
+                            <option value="impact">💥 Impact</option>
+                            <option value="general">💬 General</option>
+                        </select>
+                    </div>
+                    <textarea id="queryInput" placeholder="Ask a question about your codebase..."
+                        style="min-height:100px"></textarea>
+                    <div class="flex" style="margin-top:10px">
+                        <button class="btn btn-primary" onclick="runQuery()">Ask</button>
+                        <span id="querySpinner" style="display:none"><span class="spinner"></span></span>
+                    </div>
+                </div>
+                <div id="queryResult"></div>
+            </div>
+
+            <!-- AGENTS -->
+            <div id="panel-agents" class="panel">
+                <h2>Specialist Agents</h2>
+                <div class="flex" style="margin-bottom:16px;gap:8px;flex-wrap:wrap">
+                    <button class="btn btn-outline" onclick="selectAgent('DebugAgent')">🐛 Debug</button>
+                    <button class="btn btn-outline" onclick="selectAgent('ArchitectureAgent')">🏗️ Architecture</button>
+                    <button class="btn btn-outline" onclick="selectAgent('SecurityAgent')">🔐 Security</button>
+                    <button class="btn btn-outline" onclick="selectAgent('DocumentationAgent')">📝 Docs</button>
+                    <button class="btn btn-outline" onclick="selectAgent('RefactorAgent')">♻️ Refactor</button>
+                    <button class="btn btn-outline" onclick="selectAgent('PerformanceAgent')">⚡ Performance</button>
+                </div>
+                <div class="box">
+                    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Agent: <span id="selectedAgent"
+                            style="color:var(--accent)">DebugAgent</span></div>
+                    <textarea id="agentTask" placeholder="Describe the task for this agent..."
+                        style="min-height:100px"></textarea>
+                    <button class="btn btn-primary" style="margin-top:10px" onclick="runAgent()">Run Agent</button>
+                </div>
+                <div id="agentResult"></div>
+            </div>
+
+            <!-- TEAMS -->
+            <div id="panel-teams" class="panel">
+                <h2>Agent Teams</h2>
+                <div id="teamsList" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">Run Team</div>
+                    <select id="teamSelect" style="margin-bottom:10px">
+                        <option value="auto">🤖 Auto-select best team</option>
+                        <option value="full-audit">🔍 Full Audit</option>
+                        <option value="feature-review">✨ Feature Review</option>
+                        <option value="bug-triage">🐛 Bug Triage</option>
+                        <option value="onboarding">👋 Onboarding</option>
+                        <option value="refactor-safe">♻️ Safe Refactor</option>
+                    </select>
+                    <textarea id="teamTask" placeholder="Describe the task for the team..."
+                        style="min-height:80px"></textarea>
+                    <button class="btn btn-primary" style="margin-top:10px" onclick="runTeam()">Run Team</button>
+                </div>
+                <div id="teamResult"></div>
+            </div>
+
+            <!-- PIPELINES -->
+            <div id="panel-pipelines" class="panel">
+                <h2>Pipelines</h2>
+                <div id="pipelinesList"></div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">Run Pipeline</div>
+                    <select id="pipelineSelect" style="margin-bottom:10px">
+                        <option value="debug-pipeline">🐛 Debug Pipeline</option>
+                        <option value="security-audit-pipeline">🔐 Security Audit</option>
+                        <option value="onboarding-pipeline">👋 Onboarding</option>
+                        <option value="feature-planning-pipeline">🗺️ Feature Planning</option>
+                        <option value="code-review-pipeline">👀 Code Review</option>
+                        <option value="impact-analysis-pipeline">💥 Impact Analysis</option>
+                    </select>
+                    <textarea id="pipelineTask" placeholder="Task description..." style="min-height:80px"></textarea>
+                    <button class="btn btn-primary" style="margin-top:10px" onclick="runPipeline()">Run
+                        Pipeline</button>
+                </div>
+                <div id="pipelineResult"></div>
+            </div>
+
+            <!-- SKILLS -->
+            <div id="panel-skills" class="panel">
+                <h2>Skills</h2>
+                <div id="skillsList"></div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">Run Skill</div>
+                    <select id="skillSelect" style="margin-bottom:10px"></select>
+                    <input id="skillTarget" placeholder="Target (function name, file path, etc.)"
+                        style="margin-bottom:10px">
+                    <button class="btn btn-primary" onclick="runSkill()">Run Skill</button>
+                </div>
+                <div id="skillResult"></div>
+            </div>
+
+            <!-- LSP -->
+            <div id="panel-lsp" class="panel">
+                <h2>Symbol Navigator</h2>
+                <div class="box">
+                    <div class="flex" style="gap:8px;margin-bottom:14px;flex-wrap:wrap">
+                        <button class="btn btn-outline" onclick="setLspMode('definition')">Go to Definition</button>
+                        <button class="btn btn-outline" onclick="setLspMode('references')">Find References</button>
+                        <button class="btn btn-outline" onclick="setLspMode('hover')">Hover Docs</button>
+                        <button class="btn btn-outline" onclick="setLspMode('workspace')">Workspace Symbols</button>
+                    </div>
+                    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Mode: <span id="lspMode"
+                            style="color:var(--accent)">definition</span></div>
+                    <div class="flex">
+                        <input id="lspSymbol" class="flex-1" placeholder="Symbol name or query..."
+                            onkeydown="if(event.key==='Enter')runLsp()">
+                        <button class="btn btn-primary" onclick="runLsp()">Search</button>
+                    </div>
+                </div>
+                <div id="lspResult"></div>
+            </div>
+
+            <!-- FILE EDIT -->
+            <div id="panel-edit" class="panel">
+                <h2>File Editor</h2>
+                <div class="box">
+                    <input id="editFile" placeholder="File path (e.g. ./src/services/UserService.js)"
+                        style="margin-bottom:10px">
+                    <div class="flex" style="gap:8px;margin-bottom:10px">
+                        <button class="btn btn-outline" onclick="setEditMode('ai')" id="editModeAi"
+                            style="border-color:var(--accent);color:var(--accent)">✨ AI Edit</button>
+                        <button class="btn btn-outline" onclick="setEditMode('read')">📖 Read</button>
+                    </div>
+                    <textarea id="editInstruction" placeholder="Describe what to change (AI edit mode)..."
+                        style="min-height:80px"></textarea>
+                    <div class="flex" style="margin-top:10px">
+                        <button class="btn btn-outline" onclick="runEdit(true)">Preview (dry run)</button>
+                        <button class="btn btn-primary" onclick="runEdit(false)">Apply Edit</button>
+                    </div>
+                </div>
+                <div id="editResult"></div>
+            </div>
+
+            <!-- MEMORY -->
+            <div id="panel-memory" class="panel">
+                <h2>Memory</h2>
+                <div class="box">
+                    <div class="flex">
+                        <input id="memInput" class="flex-1" placeholder="Add a memory manually...">
+                        <select id="memType" style="width:auto">
+                            <option value="fact">fact</option>
+                            <option value="bug">bug</option>
+                            <option value="pattern">pattern</option>
+                            <option value="decision">decision</option>
+                            <option value="preference">preference</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="addMemory()">Add</button>
+                    </div>
+                </div>
+                <div class="box">
+                    <div id="memoryList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- DREAMER -->
+            <div id="panel-dreamer" class="panel">
+                <h2>Dreamer</h2>
+                <div class="box">
+                    <div id="dreamerStatus"></div>
+                    <div class="flex" style="margin-top:14px;gap:8px">
+                        <button class="btn btn-primary" onclick="triggerDream()">▶ Dream Now</button>
+                        <button class="btn btn-outline" onclick="loadDreamer()">↺ Refresh</button>
+                    </div>
+                </div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">Recent Dreams</div>
+                    <div id="dreamHistory"></div>
+                </div>
+            </div>
+
+            <!-- MONITOR -->
+            <div id="panel-monitor" class="panel">
+                <h2>Proactive Monitor</h2>
+                <div class="box">
+                    <div id="monitorStatus"></div>
+                    <div class="flex" style="margin-top:14px;gap:8px">
+                        <button class="btn btn-primary" onclick="runAllChecks()">▶ Run All Checks</button>
+                        <button class="btn btn-outline" onclick="acknowledgeAll()">✓ Ack All</button>
+                        <button class="btn btn-outline" onclick="loadMonitor()">↺ Refresh</button>
+                    </div>
+                </div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">Active Alerts</div>
+                    <div id="alertsList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- TASKS -->
+            <div id="panel-tasks" class="panel">
+                <h2>Tasks</h2>
+                <div class="box">
+                    <div class="flex">
+                        <input id="taskTitle" class="flex-1" placeholder="New task title...">
+                        <select id="taskPriority" style="width:auto">
+                            <option value="medium">medium</option>
+                            <option value="high">high</option>
+                            <option value="critical">critical</option>
+                            <option value="low">low</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="createTask()">Add</button>
+                    </div>
+                </div>
+                <div class="box">
+                    <div id="taskList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- KNOWLEDGE -->
+            <div id="panel-knowledge" class="panel">
+                <h2>Knowledge Base</h2>
+                <div class="box">
+                    <div id="kbStats">Loading...</div>
+                </div>
+                <div class="box">
+                    <div style="font-weight:600;margin-bottom:12px">Indexed Files</div>
+                    <div id="filesList" style="max-height:400px;overflow-y:auto"></div>
+                </div>
+            </div>
+
+            <!-- COST -->
+            <div id="panel-cost" class="panel">
+                <h2>Cost & Usage</h2>
+                <div id="costPanel"></div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        const API = '';
+
+        // ── Navigation ────────────────────────────────────────────────────────────────
+        function show(name) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('panel-' + name).classList.add('active');
+            document.querySelector(`[onclick="show('${name}')"]`).classList.add('active');
+            if (name === 'dashboard') loadDashboard();
+            if (name === 'memory') loadMemory();
+            if (name === 'tasks') loadTasks();
+            if (name === 'knowledge') loadKnowledge();
+            if (name === 'cost') loadCost();
+            if (name === 'dreamer') loadDreamer();
+            if (name === 'monitor') loadMonitor();
+            if (name === 'skills') loadSkills();
+            if (name === 'teams') loadTeams();
+            if (name === 'pipelines') loadPipelines();
+        }
+
+        // ── Utils ─────────────────────────────────────────────────────────────────────
+        async function api(method, path, body) {
+            const res = await fetch(API + path, {
+                method, headers: { 'Content-Type': 'application/json' },
+                body: body ? JSON.stringify(body) : undefined,
+            });
+            return res.json();
+        }
+        function toast(msg, color = 'var(--green)') {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.style.borderColor = color;
+            t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
+        }
+        function loading(id, msg = 'Loading...') { document.getElementById(id).innerHTML = `<span class="spinner"></span> ${msg}`; }
+        function badge(text, color = 'blue') { return `<span class="badge ${color}">${text}</span>`; }
+
+        // ── Dashboard ─────────────────────────────────────────────────────────────────
+        async function loadDashboard() {
+            const [kb, mem, tasks, cost] = await Promise.all([
+                api('GET', '/api/knowledge/stats'), api('GET', '/api/memory'),
+                api('GET', '/api/tasks'), api('GET', '/api/cost'),
+            ]);
+            document.getElementById('stat-docs').textContent = kb.totalDocs || 0;
+            document.getElementById('stat-files').textContent = `${kb.totalFiles || 0} files`;
+            document.getElementById('stat-mems').textContent = mem.stats?.total || 0;
+            document.getElementById('stat-tasks').textContent = tasks.stats?.total || 0;
+            document.getElementById('stat-open').textContent = `${tasks.stats?.byStatus?.todo || 0} open`;
+            const allTime = cost.allTime;
+            document.getElementById('stat-cost').textContent = allTime ? `$${allTime.costUsd.toFixed(4)}` : '$0';
+            document.getElementById('stat-calls').textContent = `${allTime?.calls || 0} API calls`;
+            const ft = document.getElementById('fileTypes');
+            ft.innerHTML = Object.entries(kb.fileTypes || {}).map(([k, v]) =>
+                `<div class="row"><span>${k}</span><span class="badge blue">${v} chunks</span></div>`).join('');
+            document.getElementById('serverStatus').style.background = 'var(--green)';
+            document.getElementById('serverStatus').style.boxShadow = '0 0 6px var(--green)';
+            document.getElementById('statusText').textContent = 'Online';
+        }
+        async function rawSearch() {
+            const q = document.getElementById('quickSearch').value.trim();
+            if (!q) return;
+            const res = await api('GET', `/api/knowledge/search?q=${encodeURIComponent(q)}&topK=6`);
+            document.getElementById('searchResults').innerHTML = res.results?.map(r =>
+                `<div class="row"><div><div>${r.file} ${badge(r.kind)} <span style="color:var(--muted);font-size:11px">${r.relevanceScore}</span></div>
+    <div style="color:var(--muted);font-size:12px;margin-top:4px">${r.snippet?.slice(0, 120)}</div></div></div>`
+            ).join('') || '<span style="color:var(--muted)">No results</span>';
+        }
+        async function ingest() {
+            const p = document.getElementById('ingestPath').value.trim();
+            if (!p) return;
+            document.getElementById('ingestResult').textContent = '⏳ Ingesting...';
+            const isFile = p.includes('.') && !p.endsWith('/');
+            const endpoint = isFile ? '/api/ingest/file' : '/api/ingest/directory';
+            const body = isFile ? { filePath: p } : { dirPath: p };
+            const res = await api('POST', endpoint, body);
+            document.getElementById('ingestResult').textContent = res.success
+                ? `✅ Ingested: ${res.result?.ingested || 1} file(s), ${res.result?.totalChunks || res.result?.chunks || 0} chunks`
+                : `❌ ${res.error}`;
+        }
+
+        // ── Chat ──────────────────────────────────────────────────────────────────────
+        let chatHistory = [];
+        async function sendChat() {
+            const msg = document.getElementById('chatInput').value.trim();
+            if (!msg) return;
+            document.getElementById('chatInput').value = '';
+            chatHistory.push({ role: 'user', content: msg });
+            renderChat();
+            const res = await api('POST', '/api/chat', { message: msg, convId: 'dashboard' });
+            if (res.answer) {
+                chatHistory.push({ role: 'assistant', content: res.answer });
+                document.getElementById('chatMeta').textContent = `Turn ${res.turn} | ${res.contextChunks} context chunks | ${res.memoriesUsed} memories | $${(res.usage?.costUsd || 0).toFixed(5)}`;
+            }
+            renderChat();
+        }
+        function renderChat() {
+            const el = document.getElementById('chatHistory');
+            el.innerHTML = chatHistory.map(m =>
+                `<div class="conv-msg ${m.role}"><div class="role">${m.role}</div><div class="bubble">${m.content}</div></div>`
+            ).join('');
+            el.scrollTop = el.scrollHeight;
+        }
+        async function resetChat() {
+            await api('DELETE', '/api/chat/dashboard');
+            chatHistory = []; renderChat();
+            document.getElementById('chatMeta').textContent = '';
+            toast('Conversation reset');
+        }
+
+        // ── Query ─────────────────────────────────────────────────────────────────────
+        async function runQuery() {
+            const q = document.getElementById('queryInput').value.trim();
+            const mode = document.getElementById('queryMode').value;
+            if (!q) return;
+            document.getElementById('querySpinner').style.display = 'inline';
+            document.getElementById('queryResult').innerHTML = '';
+            const res = await api('POST', '/api/query', { question: q, mode: mode || undefined });
+            document.getElementById('querySpinner').style.display = 'none';
+            if (res.answer) {
+                document.getElementById('queryResult').innerHTML =
+                    `<div class="box"><div class="flex" style="margin-bottom:10px">
+        ${badge(res.mode, 'blue')} <span style="color:var(--muted);font-size:11px">${res.sources?.length || 0} sources | $${(res.usage?.costUsd || 0).toFixed(5)}</span>
+      </div><div class="answer-box">${res.answer}</div>
+      <div style="margin-top:10px">${(res.sources || []).map(s => `<div class="row" style="padding:5px 0"><span style="font-size:12px">${s.file}</span>${badge(s.kind)}<span style="color:var(--muted);font-size:11px;margin-left:auto">${s.relevanceScore}</span></div>`).join('')}</div></div>`;
+            } else {
+                document.getElementById('queryResult').innerHTML = `<div style="color:var(--red)">${res.error || 'Error'}</div>`;
+            }
+        }
+
+        // ── Agents ────────────────────────────────────────────────────────────────────
+        let selectedAgentName = 'DebugAgent';
+        function selectAgent(name) { selectedAgentName = name; document.getElementById('selectedAgent').textContent = name; }
+        async function runAgent() {
+            const task = document.getElementById('agentTask').value.trim();
+            if (!task) return;
+            loading('agentResult', `Running ${selectedAgentName}...`);
+            const res = await api('POST', `/api/agents/${selectedAgentName}`, { task });
+            document.getElementById('agentResult').innerHTML = res.answer
+                ? `<div class="box"><div style="color:var(--muted);font-size:11px;margin-bottom:8px">${res.contextChunks} ctx | ${res.memoriesUsed} memories</div><div class="answer-box">${res.answer}</div></div>`
+                : `<div style="color:var(--red)">${res.error}</div>`;
+        }
+
+        // ── Teams ─────────────────────────────────────────────────────────────────────
+        async function loadTeams() {
+            const res = await api('GET', '/api/agents/teams/list');
+            document.getElementById('teamsList').innerHTML = (res.teams || []).map(t =>
+                `<div class="card" onclick="document.getElementById('teamSelect').value='${t.name}';document.getElementById('teamTask').focus()" style="cursor:pointer">
+      <div class="label">${t.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${t.description}</div>
+      <div class="tags">${t.agents.map(a => `<span class="tag">${a.replace('Agent', '')}</span>`).join('')}</div>
+    </div>`).join('');
+        }
+        async function runTeam() {
+            const team = document.getElementById('teamSelect').value;
+            const task = document.getElementById('teamTask').value.trim();
+            if (!task) return;
+            loading('teamResult', `Running team "${team}"...`);
+            const endpoint = team === 'auto' ? '/api/agents/teams/auto' : `/api/agents/teams/${team}`;
+            const res = await api('POST', endpoint, { task });
+            document.getElementById('teamResult').innerHTML = res.report
+                ? `<div class="box"><div style="color:var(--muted);font-size:11px;margin-bottom:8px">Team: ${res.team} | Agents: ${(res.agentsRun || []).join(', ')}</div><div class="answer-box">${res.report}</div></div>`
+                : `<div style="color:var(--red)">${res.error || JSON.stringify(res)}</div>`;
+        }
+
+        // ── Pipelines ─────────────────────────────────────────────────────────────────
+        async function loadPipelines() {
+            const res = await api('GET', '/api/pipelines');
+            document.getElementById('pipelinesList').innerHTML = (res.pipelines || []).map(p =>
+                `<div class="box" style="margin-bottom:8px">
+      <div class="flex"><span style="font-weight:600">${p.name}</span></div>
+      <div style="color:var(--muted);font-size:12px;margin:6px 0">${p.description}</div>
+      <div class="tags">${p.steps.map(s => `<span class="tag">${s}</span>`).join(' → ')}</div>
+    </div>`).join('');
+        }
+        async function runPipeline() {
+            const name = document.getElementById('pipelineSelect').value;
+            const task = document.getElementById('pipelineTask').value.trim();
+            if (!task) return;
+            loading('pipelineResult', `Running pipeline "${name}"...`);
+            const res = await api('POST', `/api/pipelines/${name}`, { task });
+            const lastAnswer = res.finalOutput?.answer || res.finalOutput?.plan || res.finalOutput?.review || JSON.stringify(res.finalOutput || {}).slice(0, 200);
+            document.getElementById('pipelineResult').innerHTML = `<div class="box">
+    <div style="color:var(--muted);font-size:11px;margin-bottom:8px">Steps: ${res.successCount}/${res.totalSteps} OK | ${res.durationMs}ms</div>
+    <div class="tags">${(res.steps || []).map(s => `<span class="tag" style="color:${s.success ? 'var(--green)' : 'var(--red)'}">${s.step}</span>`).join('')}</div>
+    ${lastAnswer ? `<div class="answer-box" style="margin-top:12px">${lastAnswer}</div>` : ''}
+  </div>`;
+        }
+
+        // ── Skills ────────────────────────────────────────────────────────────────────
+        async function loadSkills() {
+            const res = await api('GET', '/api/skills');
+            const sel = document.getElementById('skillSelect');
+            sel.innerHTML = (res.skills || []).map(s => `<option value="${s.name}">${s.name}${s.builtIn ? ' ⭐' : ''}</option>`).join('');
+            document.getElementById('skillsList').innerHTML = (res.skills || []).slice(0, 12).map(s =>
+                `<div class="row"><div class="flex-1"><div>${s.name} ${s.builtIn ? badge('built-in', 'green') : badge('custom', 'purple')}</div>
+    <div style="color:var(--muted);font-size:12px">${s.description}</div></div></div>`).join('');
+        }
+        async function runSkill() {
+            const skill = document.getElementById('skillSelect').value;
+            const target = document.getElementById('skillTarget').value.trim();
+            if (!target) return;
+            loading('skillResult', `Running skill "${skill}" on "${target}"...`);
+            const res = await api('POST', `/api/skills/${skill}`, { target });
+            document.getElementById('skillResult').innerHTML = res.result
+                ? `<div class="box"><div class="answer-box">${res.result}</div></div>`
+                : `<div style="color:var(--red)">${res.error}</div>`;
+        }
+
+        // ── LSP ───────────────────────────────────────────────────────────────────────
+        let lspCurrentMode = 'definition';
+        function setLspMode(m) { lspCurrentMode = m; document.getElementById('lspMode').textContent = m; }
+        async function runLsp() {
+            const sym = document.getElementById('lspSymbol').value.trim();
+            if (!sym) return;
+            loading('lspResult');
+            let res, html = '';
+            if (lspCurrentMode === 'definition') {
+                res = await api('GET', `/api/lsp/definition/${encodeURIComponent(sym)}`);
+                html = `<div class="box"><div style="font-weight:600;margin-bottom:10px">Definitions of "${sym}" (${res.count})</div>
+      ${(res.definitions || []).map(d => `<div class="row"><span style="font-size:12px;color:var(--accent)">${d.file || d.path}</span>${badge(d.kind || 'symbol')}<span style="color:var(--muted);font-size:11px">L${d.lineNumber || '?'}</span></div>`).join('')}</div>`;
+            } else if (lspCurrentMode === 'references') {
+                res = await api('GET', `/api/lsp/references/${encodeURIComponent(sym)}`);
+                html = `<div class="box"><div style="font-weight:600;margin-bottom:10px">${res.total} references to "${sym}"</div>
+      ${(res.references || []).slice(0, 15).map(r => `<div class="row"><span style="color:var(--accent);font-size:12px">${r.file}</span>:${r.line} ${badge(r.type)}<span style="color:var(--muted);font-size:11px;margin-left:8px">${r.text?.slice(0, 60)}</span></div>`).join('')}</div>`;
+            } else if (lspCurrentMode === 'hover') {
+                res = await api('POST', '/api/lsp/hover', { symbol: sym });
+                html = `<div class="box"><div class="answer-box">${res.documentation || res.error}</div></div>`;
+            } else {
+                res = await api('GET', `/api/lsp/symbols?q=${encodeURIComponent(sym)}`);
+                html = `<div class="box"><div style="font-weight:600;margin-bottom:10px">Workspace symbols (${res.symbols?.length || 0})</div>
+      ${(res.symbols || []).map(s => `<div class="row"><span style="color:var(--accent)">${s.name}</span>${badge(s.kind)}<span style="color:var(--muted);font-size:11px">${s.file}</span></div>`).join('')}</div>`;
+            }
+            document.getElementById('lspResult').innerHTML = html;
+        }
+
+        // ── File Edit ─────────────────────────────────────────────────────────────────
+        let editMode = 'ai';
+        function setEditMode(m) {
+            editMode = m;
+            document.getElementById('editModeAi').style.borderColor = m === 'ai' ? 'var(--accent)' : 'var(--border)';
+            document.getElementById('editModeAi').style.color = m === 'ai' ? 'var(--accent)' : 'var(--muted)';
+        }
+        async function runEdit(dryRun) {
+            const filePath = document.getElementById('editFile').value.trim();
+            if (!filePath) return;
+            if (editMode === 'read') {
+                const res = await api('GET', `/api/files/read?path=${encodeURIComponent(filePath)}`);
+                document.getElementById('editResult').innerHTML = `<div class="box"><pre>${res.content || res.error}</pre></div>`;
+                return;
+            }
+            const instruction = document.getElementById('editInstruction').value.trim();
+            if (!instruction) return;
+            loading('editResult', 'Applying AI edit...');
+            const res = await api('POST', '/api/files/ai-edit', { filePath, instruction, dryRun });
+            document.getElementById('editResult').innerHTML = `<div class="box">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${dryRun ? '🔍 Preview (not saved)' : '✅ Applied'} | ${res.diff?.summary || ''}</div>
+    <pre>${(res.diff?.changes || []).join('\n') || JSON.stringify(res, null, 2).slice(0, 500)}</pre></div>`;
+        }
+
+        // ── Memory ────────────────────────────────────────────────────────────────────
+        async function loadMemory() {
+            const res = await api('GET', '/api/memory');
+            const el = document.getElementById('memoryList');
+            if (!res.memories?.length) { el.innerHTML = '<span style="color:var(--muted)">No memories yet.</span>'; return; }
+            el.innerHTML = res.memories.map(m =>
+                `<div class="row"><div class="flex-1">
+      <div>${badge(m.type)} <span style="font-size:12px">${m.content.slice(0, 100)}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">${m.id} | used ${m.useCount}× | ${m.createdAt?.slice(0, 10)}</div>
+    </div><button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="deleteMemory('${m.id}')">×</button></div>`
+            ).join('');
+        }
+        async function addMemory() {
+            const c = document.getElementById('memInput').value.trim();
+            const t = document.getElementById('memType').value;
+            if (!c) return;
+            await api('POST', '/api/memory', { content: c, type: t });
+            document.getElementById('memInput').value = '';
+            toast('Memory saved'); loadMemory();
+        }
+        async function deleteMemory(id) {
+            await api('DELETE', `/api/memory/${id}`);
+            loadMemory();
+        }
+
+        // ── Dreamer ───────────────────────────────────────────────────────────────────
+        async function loadDreamer() {
+            const res = await api('GET', '/api/agents/dreamer/status');
+            document.getElementById('dreamerStatus').innerHTML =
+                `<div class="flex"><div>${badge(res.isRunning ? 'running' : 'stopped', res.isRunning ? 'green' : 'yellow')}</div>
+    <span style="color:var(--muted);font-size:12px">Dream count: ${res.dreamCount} | Last: ${res.lastDream?.slice(0, 16) || 'never'}</span></div>`;
+            document.getElementById('dreamHistory').innerHTML = (res.recentDreams || []).reverse().map(d =>
+                `<div class="row"><span style="font-size:12px">${d.timestamp?.slice(0, 16)}</span>
+    <span style="color:var(--muted);font-size:12px">${d.insightsGenerated} insights, ${d.memoriesPruned} pruned</span>
+    <span style="color:var(--muted);font-size:11px">${d.durationMs}ms</span></div>`
+            ).join('') || '<span style="color:var(--muted)">No dreams yet.</span>';
+        }
+        async function triggerDream() {
+            loading('dreamHistory', 'Dreaming...');
+            await api('POST', '/api/agents/dreamer/now');
+            toast('Dream complete ✨'); loadDreamer();
+        }
+
+        // ── Monitor ───────────────────────────────────────────────────────────────────
+        async function loadMonitor() {
+            const res = await api('GET', '/api/monitor/status');
+            document.getElementById('monitorStatus').innerHTML =
+                `<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
+      <div class="card"><div class="label">Unacked Alerts</div><div class="value" style="color:var(--yellow)">${res.alerts?.unacknowledged || 0}</div></div>
+      <div class="card"><div class="label">Critical</div><div class="value" style="color:var(--red)">${res.alerts?.critical || 0}</div></div>
+      <div class="card"><div class="label">Warnings</div><div class="value" style="color:var(--yellow)">${res.alerts?.warn || 0}</div></div>
+    </div>`;
+            const alerts = await api('GET', '/api/monitor/alerts?unacknowledged=true&limit=20');
+            document.getElementById('alertsList').innerHTML = (alerts.alerts || []).length
+                ? (alerts.alerts || []).map(a =>
+                    `<div class="alert-item ${a.severity}">
+          <div class="flex"><span style="font-weight:600">${a.checkName}</span>${badge(a.severity, a.severity === 'critical' ? 'red' : a.severity === 'warn' ? 'yellow' : 'blue')}
+          <span style="color:var(--muted);font-size:11px;margin-left:auto">${a.triggeredAt?.slice(0, 16)}</span>
+          <button class="btn btn-outline" style="padding:2px 8px;font-size:11px" onclick="ackAlert('${a.id}')">Ack</button></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">${a.findings?.length || 0} findings: ${(a.findings || []).slice(0, 2).map(f => f.file || f.title || f.label || '').join(', ')}</div>
+        </div>`).join('')
+                : '<span style="color:var(--muted)">No unacknowledged alerts.</span>';
+        }
+        async function runAllChecks() {
+            toast('Running all checks...');
+            await api('POST', '/api/monitor/run-all');
+            loadMonitor();
+        }
+        async function acknowledgeAll() {
+            await api('POST', '/api/monitor/acknowledge-all');
+            toast('All acknowledged'); loadMonitor();
+        }
+        async function ackAlert(id) {
+            await api('POST', `/api/monitor/alerts/${id}/acknowledge`);
+            loadMonitor();
+        }
+
+        // ── Tasks ─────────────────────────────────────────────────────────────────────
+        async function loadTasks() {
+            const res = await api('GET', '/api/tasks?includeDone=false');
+            const el = document.getElementById('taskList');
+            if (!res.tasks?.length) { el.innerHTML = '<span style="color:var(--muted)">No open tasks.</span>'; return; }
+            el.innerHTML = `<table><thead><tr><th>#</th><th>Title</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>
+    ${res.tasks.map(t => `<tr>
+      <td style="color:var(--muted)">${t.id}</td>
+      <td>${t.title}</td>
+      <td>${badge(t.priority, t.priority === 'critical' ? 'red' : t.priority === 'high' ? 'yellow' : 'blue')}</td>
+      <td>${badge(t.status)}</td>
+      <td><button class="btn btn-outline" style="padding:2px 8px;font-size:11px" onclick="doneTask(${t.id})">Done</button></td>
+    </tr>`).join('')}</tbody></table>`;
+        }
+        async function createTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const priority = document.getElementById('taskPriority').value;
+            if (!title) return;
+            await api('POST', '/api/tasks', { title, priority });
+            document.getElementById('taskTitle').value = '';
+            toast('Task created'); loadTasks();
+        }
+        async function doneTask(id) {
+            await api('PATCH', `/api/tasks/${id}`, { status: 'done' });
+            toast('Task done ✓'); loadTasks();
+        }
+
+        // ── Knowledge ─────────────────────────────────────────────────────────────────
+        async function loadKnowledge() {
+            const [stats, files] = await Promise.all([api('GET', '/api/knowledge/stats'), api('GET', '/api/knowledge/files')]);
+            document.getElementById('kbStats').innerHTML =
+                `<div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">
+      <div class="card"><div class="label">Documents</div><div class="value">${stats.totalDocs}</div></div>
+      <div class="card"><div class="label">Files</div><div class="value">${stats.totalFiles}</div></div>
+      ${Object.entries(stats.fileTypes || {}).map(([k, v]) => `<div class="card"><div class="label">${k}</div><div class="value">${v}</div></div>`).join('')}
+    </div>`;
+            document.getElementById('filesList').innerHTML = (files.files || []).map(f =>
+                `<div class="row"><span style="font-size:12px;color:var(--accent)">${f.filename}</span>${badge(f.kind)}<span style="color:var(--muted);font-size:11px">${f.chunks} chunks</span></div>`
+            ).join('');
+        }
+
+        // ── Cost ──────────────────────────────────────────────────────────────────────
+        async function loadCost() {
+            const res = await api('GET', '/api/cost');
+            document.getElementById('costPanel').innerHTML = `
+    <div class="grid">
+      <div class="card"><div class="label">All-time Cost</div><div class="value">$${res.allTime?.costUsd?.toFixed(4) || '0.0000'}</div><div class="sub">${res.allTime?.calls || 0} total calls</div></div>
+      <div class="card"><div class="label">Input Tokens</div><div class="value" style="color:var(--green)">${(res.allTime?.inputTokens || 0).toLocaleString()}</div></div>
+      <div class="card"><div class="label">Output Tokens</div><div class="value" style="color:var(--purple)">${(res.allTime?.outputTokens || 0).toLocaleString()}</div></div>
+    </div>`;
+        }
+
+        // ── Boot ──────────────────────────────────────────────────────────────────────
+        loadDashboard();
+    </script>
+</body>
+
+</html>

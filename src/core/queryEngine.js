@@ -1,9 +1,10 @@
-'use strict';
-
-const llmClient = require('../utils/llmClient');
+const llm = require('../utils/llmClient');
 const indexer = require('./indexer');
 const logger = require('../utils/logger');
+const costTracker = require('../utils/costTracker');
+const { MemoryManager } = require('../memory/memoryManager');
 
+// The 3 core query modes from the article
 const QUERY_MODES = {
     DEBUG: 'debug',       // "Why is this failing?"
     USAGE: 'usage',       // "Where is this used?"
@@ -11,6 +12,9 @@ const QUERY_MODES = {
     GENERAL: 'general',   // Open-ended question
 };
 
+/**
+ * Detect the most appropriate query mode from the question text
+ */
 function detectMode(question) {
     const q = question.toLowerCase();
 
@@ -31,6 +35,9 @@ function detectMode(question) {
     return QUERY_MODES.GENERAL;
 }
 
+/**
+ * Build a mode-specific system prompt
+ */
 function buildSystemPrompt(mode) {
     const base = `You are an expert developer assistant with deep knowledge of the codebase.
 You answer questions ONLY based on the code context provided — never guess or hallucinate.
@@ -71,6 +78,9 @@ Your job: Answer the developer's question using the codebase context.
     return base + (modeInstructions[mode] || modeInstructions[QUERY_MODES.GENERAL]);
 }
 
+/**
+ * Format retrieved context chunks into a readable prompt section
+ */
 function formatContext(docs) {
     if (!docs || docs.length === 0) {
         return 'No relevant context found in the codebase index.';
@@ -100,6 +110,9 @@ ${doc.content}
 }
 
 class QueryEngine {
+    /**
+     * Main query method
+     */
     async query(question, options = {}) {
         const {
             mode: forcedMode,
@@ -115,23 +128,23 @@ class QueryEngine {
         const mode = forcedMode || detectMode(question);
         logger.info(`Query mode: ${mode} | Q: "${question.slice(0, 80)}..."`);
 
+        // Retrieve relevant context
         let docs;
         switch (mode) {
             case QUERY_MODES.DEBUG:
                 docs = indexer.searchForErrors(question, topK);
                 break;
-            case QUERY_MODES.USAGE: {
+            case QUERY_MODES.USAGE:
+                // Extract the symbol being searched
                 const usageMatch = question.match(/(?:where|how|who).*?(?:is|are|does)?\s+[`"']?(\w+)[`"']?\s+(?:used|called|import|reference)/i);
                 const symbol = usageMatch?.[1] || question;
                 docs = indexer.searchForUsages(symbol, topK);
                 break;
-            }
-            case QUERY_MODES.IMPACT: {
+            case QUERY_MODES.IMPACT:
                 const impactMatch = question.match(/(?:change|modify|update|refactor)\s+[`"']?(\w+)[`"']?/i);
                 const target = impactMatch?.[1] || question;
                 docs = indexer.searchForImpact(target, topK);
                 break;
-            }
             default:
                 docs = indexer.search(question, topK, filter);
         }
@@ -147,24 +160,46 @@ ${contextText}
 
 ## Answer`;
 
-        logger.info(`Sending to ${llmClient.label()}: ${docs.length} context chunks`);
+        const { provider, model } = llm.getInfo();
+        logger.info(`Sending to ${provider} (${model}): ${docs.length} context chunks`);
+
+        // Inject relevant memories into context
+        const memories = MemoryManager.getRelevant(question, 5);
+        const memoryContext = MemoryManager.formatAsContext(memories);
+        const fullSystem = memoryContext ? `${systemPrompt}\n\n${memoryContext}` : systemPrompt;
 
         if (stream) {
-            return this._streamQuery(systemPrompt, userMessage, docs, mode);
+            return this._streamQuery(fullSystem, userMessage, docs, mode);
         }
 
-        const response = await llmClient.createMessage({
-            maxTokens: 2000,
-            system: systemPrompt,
+        const response = await llm.chat({
+            model: llm.model('smart'),
+            max_tokens: 2000,
+            system: fullSystem,
             messages: [{ role: 'user', content: userMessage }],
         });
 
         const answer = response.content[0].text;
 
+        // Track cost
+        const sessionId = options.sessionId || 'default';
+        const cost = costTracker.record({
+            model: llm.model('smart'),
+            inputTokens: response.usage.input_tokens,
+            outputTokens: response.usage.output_tokens,
+            sessionId,
+            queryType: mode,
+        });
+
+        // Auto-extract memories from this exchange (async, fire-and-forget)
+        if (options.extractMemories !== false) {
+            MemoryManager.extractFromExchange(question, answer, sessionId).catch(() => { });
+        }
+
         return {
             answer,
             mode,
-            provider: llmClient.label(),
+            memoriesUsed: memories.length,
             sources: docs.map(d => ({
                 file: d.filename,
                 path: d.filePath,
@@ -175,22 +210,27 @@ ${contextText}
             usage: {
                 inputTokens: response.usage.input_tokens,
                 outputTokens: response.usage.output_tokens,
+                costUsd: cost.costUsd,
             },
         };
     }
 
+    /**
+     * Streaming version of query
+     */
     async *_streamQuery(systemPrompt, userMessage, docs, mode) {
-        const stream = await llmClient.createMessage({
-            maxTokens: 2000,
+        const stream = await llm.chat({
+            model: llm.model('smart'),
+            max_tokens: 2000,
             system: systemPrompt,
             messages: [{ role: 'user', content: userMessage }],
             stream: true,
         });
 
+        // First yield metadata
         yield {
             type: 'metadata',
             mode,
-            provider: llmClient.label(),
             sources: docs.map(d => ({
                 file: d.filename,
                 path: d.filePath,
@@ -199,6 +239,7 @@ ${contextText}
             })),
         };
 
+        // Then stream the answer
         for await (const event of stream) {
             if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
                 yield { type: 'text', text: event.delta.text };
@@ -209,6 +250,9 @@ ${contextText}
         }
     }
 
+    /**
+     * Quick debug helper - answer a specific error without full context retrieval
+     */
     async debugError(errorMessage, stackTrace = '', options = {}) {
         const question = `Why is this error happening and how do I fix it?
 Error: ${errorMessage}
@@ -217,6 +261,9 @@ ${stackTrace ? `Stack trace:\n${stackTrace}` : ''}`;
         return this.query(question, { ...options, mode: QUERY_MODES.DEBUG });
     }
 
+    /**
+     * Find all usages of a symbol across the codebase
+     */
     async findUsages(symbol, options = {}) {
         return this.query(`Where is ${symbol} used across the codebase?`, {
             ...options,
@@ -224,6 +271,9 @@ ${stackTrace ? `Stack trace:\n${stackTrace}` : ''}`;
         });
     }
 
+    /**
+     * Impact analysis for a proposed change
+     */
     async analyzeImpact(target, changeDescription = '', options = {}) {
         const question = changeDescription
             ? `If I change ${target} to ${changeDescription}, what would break or be affected?`
